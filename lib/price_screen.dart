@@ -11,10 +11,11 @@ class PriceScreen extends StatefulWidget {
 
 class _PriceScreenState extends State<PriceScreen> {
   String selectedCurrency = 'USD';
-  double btcValue = 0;
-  double etcValue = 0;
-  double ltcValue = 0;
+  String btcValue;
+  String etcValue;
+  String ltcValue;
   dynamic returnedValue;
+  bool isLoading = true;
 
   DropdownButton<String> androidDropdown() {
     List<DropdownMenuItem<String>> dropdownItems = [];
@@ -32,6 +33,7 @@ class _PriceScreenState extends State<PriceScreen> {
       onChanged: (value) {
         setState(() {
           selectedCurrency = value;
+          isLoading = true;
           getData();
         });
       },
@@ -49,6 +51,7 @@ class _PriceScreenState extends State<PriceScreen> {
       itemExtent: 32.0,
       onSelectedItemChanged: (selectedIndex) {
         print(selectedIndex);
+        isLoading = true;
         getData();
       },
       children: pickerItems,
@@ -59,9 +62,10 @@ class _PriceScreenState extends State<PriceScreen> {
     returnedValue = await CoinData().getCoinData(selectedCurrency);
     if (returnedValue != null) {
       var decodedValue = jsonDecode(returnedValue);
-      btcValue = decodedValue['btc'].toDouble();
-      etcValue = decodedValue['eth'].toDouble();
-      ltcValue = decodedValue['ltc'].toDouble();
+      btcValue = decodedValue['btc'].toString();
+      etcValue = decodedValue['eth'].toString();
+      ltcValue = decodedValue['ltc'].toString();
+      isLoading = false;
     } else {
       print('in null');
     }
@@ -89,15 +93,15 @@ class _PriceScreenState extends State<PriceScreen> {
             children: <Widget>[
               CoinCard(
                   coinName: 'BTC',
-                  coinValue: btcValue,
+                  coinValue: isLoading ? '?' : btcValue,
                   selectedCurrency: selectedCurrency),
               CoinCard(
                   coinName: 'ETH',
-                  coinValue: etcValue,
+                  coinValue: isLoading ? '?' : etcValue,
                   selectedCurrency: selectedCurrency),
               CoinCard(
                   coinName: 'LTC',
-                  coinValue: ltcValue,
+                  coinValue: isLoading ? '?' : ltcValue,
                   selectedCurrency: selectedCurrency),
             ],
           ),
@@ -123,7 +127,7 @@ class CoinCard extends StatelessWidget {
   }) : super(key: key);
 
   final String coinName;
-  final double coinValue;
+  final String coinValue;
   final String selectedCurrency;
 
   @override
