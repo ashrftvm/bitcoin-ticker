@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'coin_data.dart';
+import 'dart:convert';
 import 'dart:io' show Platform;
 
 class PriceScreen extends StatefulWidget {
@@ -10,6 +11,10 @@ class PriceScreen extends StatefulWidget {
 
 class _PriceScreenState extends State<PriceScreen> {
   String selectedCurrency = 'USD';
+  double btcValue = 0;
+  double etcValue = 0;
+  double ltcValue = 0;
+  dynamic returnedValue;
 
   DropdownButton<String> androidDropdown() {
     List<DropdownMenuItem<String>> dropdownItems = [];
@@ -27,6 +32,7 @@ class _PriceScreenState extends State<PriceScreen> {
       onChanged: (value) {
         setState(() {
           selectedCurrency = value;
+          getData();
         });
       },
     );
@@ -43,17 +49,29 @@ class _PriceScreenState extends State<PriceScreen> {
       itemExtent: 32.0,
       onSelectedItemChanged: (selectedIndex) {
         print(selectedIndex);
+        getData();
       },
       children: pickerItems,
     );
   }
 
-  //TODO: Create a method here called getData() to get the coin data from coin_data.dart
+  void getData() async {
+    returnedValue = await CoinData().getCoinData(selectedCurrency);
+    if (returnedValue != null) {
+      var decodedValue = jsonDecode(returnedValue);
+      btcValue = decodedValue['btc'].toDouble();
+      etcValue = decodedValue['eth'].toDouble();
+      ltcValue = decodedValue['ltc'].toDouble();
+    } else {
+      print('in null');
+    }
+    setState(() {});
+  }
 
   @override
   void initState() {
     super.initState();
-    //TODO: Call getData() when the screen loads up.
+    getData();
   }
 
   @override
@@ -66,27 +84,22 @@ class _PriceScreenState extends State<PriceScreen> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
-          Padding(
-            padding: EdgeInsets.fromLTRB(18.0, 18.0, 18.0, 0),
-            child: Card(
-              color: Colors.lightBlueAccent,
-              elevation: 5.0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10.0),
-              ),
-              child: Padding(
-                padding: EdgeInsets.symmetric(vertical: 15.0, horizontal: 28.0),
-                child: Text(
-                  //TODO: Update the Text Widget with the live bitcoin data here.
-                  '1 BTC = ? USD',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 20.0,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-            ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: <Widget>[
+              CoinCard(
+                  coinName: 'BTC',
+                  coinValue: btcValue,
+                  selectedCurrency: selectedCurrency),
+              CoinCard(
+                  coinName: 'ETH',
+                  coinValue: etcValue,
+                  selectedCurrency: selectedCurrency),
+              CoinCard(
+                  coinName: 'LTC',
+                  coinValue: ltcValue,
+                  selectedCurrency: selectedCurrency),
+            ],
           ),
           Container(
             height: 150.0,
@@ -96,6 +109,44 @@ class _PriceScreenState extends State<PriceScreen> {
             child: Platform.isIOS ? iOSPicker() : androidDropdown(),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class CoinCard extends StatelessWidget {
+  const CoinCard({
+    Key key,
+    @required this.coinValue,
+    @required this.coinName,
+    @required this.selectedCurrency,
+  }) : super(key: key);
+
+  final String coinName;
+  final double coinValue;
+  final String selectedCurrency;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.fromLTRB(18.0, 18.0, 18.0, 0),
+      child: Card(
+        color: Colors.lightBlueAccent,
+        elevation: 5.0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10.0),
+        ),
+        child: Padding(
+          padding: EdgeInsets.symmetric(vertical: 15.0, horizontal: 28.0),
+          child: Text(
+            '1 $coinName = $coinValue $selectedCurrency',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 20.0,
+              color: Colors.white,
+            ),
+          ),
+        ),
       ),
     );
   }
